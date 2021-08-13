@@ -34,7 +34,7 @@ class City:
 
 		self.streets = nodes_and_edges
 
-def draw_city(city, nx=10, ny=10, targets=[]):
+def draw_city(city, nx=10, ny=10, targets=[], route=[]):
 	positions = {}
 	for node in list(city.streets.nodes):
 		positions[node] = [node%nx, int(node/ny)]
@@ -42,7 +42,11 @@ def draw_city(city, nx=10, ny=10, targets=[]):
 	networkx.drawing.nx_pylab.draw_networkx_edges(city.streets, pos=positions)
 	if(targets):
 		plt.plot([positions[node][0] for node in targets], [positions[node][1] for node in targets],"*")
+
+	if(route):
+		plt.plot([positions[node][0] for node in route], [positions[node][1] for node in route],'r')
 	plt.show()
+
 
 def main():
 	if(len(sys.argv)==4):
