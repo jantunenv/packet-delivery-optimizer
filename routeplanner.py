@@ -74,9 +74,15 @@ class Salesman_solver:
 
 		finalroute = []
 		#add all but the last one because 0 causes problems
+
 		for i in range(len(route) - 2):
-			for node in self.paths[route[i]][route[i+1] - 1][2]:
-				finalroute.append(node)
+
+			if(route[i]<route[i+1]):
+				for node in self.paths[route[i]][route[i+1] - 1][2]:
+					finalroute.append(node)
+			else:
+				for node in self.paths[route[i]][route[i+1]][2]:
+					finalroute.append(node)
 
 		#add final path
 		for node in self.paths[route[-2]][0][2]:
@@ -106,19 +112,14 @@ class Salesman_solver:
 
 
 		#remove dublicates from the final route and compress in together
-
 		finalroute = []
 
 		for index, length, path in route:
 			for i in range(0,len(path)-1):
 				finalroute.append(path[i])
 
-
 		for node in self.paths[current][0][2]:
 			finalroute.append(node)
-
-		#for i in range(len(self.paths[0][current-1][2])):
-		#	finalroute.append(self.paths[0][current-1][2][-i-1])
 
 		return(finalroute)
 
