@@ -11,9 +11,78 @@ class Salesman_solver:
 		self.paths = paths
 		self.visit_list = np.zeros(len(paths.keys()),dtype=np.int8)
 
-	def solve(self, method="naive"):
+	def solve(self, method="naive", steps = 1000, beta=0.5, initmode="random"):
 		if(method=="naive"):
 			return(self.solve_naive())
+		elif(method=="metropolis"):
+			return(self.solve_metropolis(steps, beta, initmode))
+
+	def solve_metropolis(self, steps=1000, beta=0.5, initmode="random"):
+		#metropolis monte carlo solution
+		route = []
+		n = len(self.paths.keys())
+
+		#start from zero
+		route.append(0)
+
+		#Fill all but first and last index
+		if(initmode == "random"):
+			for node in np.arange(1, n):
+				route.append(node)
+		else:
+			print("not implemented")
+			exit()
+
+		#connect loop back to zero
+		route.append(0)
+
+		e_old = 0.0
+		e_new = 0.0
+		ind1 = 0
+		ind2 = 0
+		for step in range(steps):
+			#random index not including the first and last index
+			while(True):
+				ind1 = np.random.randint(1,n)
+				ind2 = np.random.randint(1,n)
+				if(ind1 != ind2):
+					break
+
+			x1 = route[ind1 - 1]
+			x2 = route[ind1 + 1]
+			x3 = route[ind2 - 1]
+			x4 = route[ind2 + 1]
+
+			e_old =   self.paths[x1][ind1 - 1][1] + \
+				  self.paths[ind1][x2 - 1][1] + \
+				  self.paths[x3][ind2 - 1][1] + \
+				  self.paths[ind2][x4 - 1][1]
+
+			e_new =   self.paths[x1][ind2 - 1][1] + \
+				  self.paths[ind2][x2 - 1][1] + \
+				  self.paths[x3][ind1 - 1][1] + \
+				  self.paths[ind1][x4 - 1][1]
+
+			if(e_new <= e_old):
+				route[ind1], route[ind2] = route[ind2], route[ind1]
+			else:
+
+				rn = np.random.rand()
+				p = np.exp(-beta*(e_new - e_old))
+				if(rn<p):
+					route[ind1], route[ind2] = route[ind2], route[ind1]
+
+		finalroute = []
+		#add all but the last one because 0 causes problems
+		for i in range(len(route) - 2):
+			for node in self.paths[route[i]][route[i+1] - 1][2]:
+				finalroute.append(node)
+
+		#add final path
+		for node in self.paths[route[-2]][0][2]:
+			finalroute.append(node)
+
+		return(finalroute)
 
 	def solve_naive(self):
 		#always go to the closest unvisited neighbour
@@ -89,7 +158,7 @@ def main():
 	shortest_paths = best_routes(helsinki, targets)
 
 	solver = Salesman_solver(shortest_paths)
-	solution = solver.solve()
+	solution = solver.solve("metropolis")
 
 	citygenerator.draw_city(helsinki, nx, ny, targets, solution)
 
