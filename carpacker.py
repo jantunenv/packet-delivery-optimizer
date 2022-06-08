@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 
 class Car:
 	addresses = []
@@ -70,23 +71,17 @@ class Garage:
 		for x in range(p[0] , p[0] + item[0] ):
 			for y in range(p[1] , p[1] + item[1] ):
 				if(y == 0 or y == y_wall - 1): # next to wall
-					print("wall y", x,y)
 					score += 1
 				if(x == 0 or x == x_wall - 1): #next to wall
 					score += 1
-					print("wall x", x,y)
 				if(x - 1 >= 0 and fill_map[x - 1, y]):
 					score += 1
-					print("left_item", x,y)
 				if(x + 1 < x_wall and fill_map[x + 1, y]):
 					score += 1
-					print("right_item", x,y)
 				if(y - 1 >= 0 and fill_map[x, y - 1]):
 					score += 1
-					print("below item", x,y)
 				if(y + 1  < y_wall and fill_map[x, y + 1]):
 					score += 1
-					print("above item", x,y)
 
 		return(score)
 
@@ -103,10 +98,10 @@ class Garage:
 				for y in range(D):
 					#Check out of bounds and overlapping other items
 					if(x + w - 1 >= W or y + d - 1 >= D or fill_map[x:x + w, y:y + d].any()):
-						S[x,y] == 0.0
+						S[x,y] = 0.0
 					else:
 						S[x,y] = rho * self.perimeter_touching_items_or_walls([x, y], item, fill_map) * 2 * w
-						+ 2 * d + mu*sum(fill_map) * W * D
+						+ 2 * d + mu*sum(fill_map>0) * W * D
 						- (1 - rho - mu) * abs(h - layer_h)*layer_h
 
 	def pack_items(self):
@@ -122,49 +117,44 @@ class Garage:
 
 		layers = []
 		layers.append([layer_h, fill_map])
-		layer_index = 0
 
+		S_best = 0.0
+		S_temp = 0.0	
 		for j in range(1, len(self.items)):
-			best_position = None
-			best_layer = None
 			item = self.items[j]
-			S_star = 0
-			best_S = 0
-
-			for l_ind in range(len(layers)):
-				fill_map = layers[l_ind][1]
-				if(item[2] <= layers[l_ind][0]): #First try layers that are at least as high as the item
-					self.compute_S(S, item, layers[l_ind])
-					best_S_current_layer = np.amax(S)
-					if(best_S_current_layer > S_star):
-						S_star = best_S_current_layer
-						best_position = np.asarray(np.where(S == S_star))[:,0]
-						best_layer = l_ind
-			if(S_star > 0.0):
-				fill_map = layers[best_layer][1]
-				self.add_to_fill_map(best_position, item, fill_map, j+1)
-				layers[best_layer][1] = fill_map
-				continue
-			else: #Try to fit it to any other layer
-				for l_ind in range(len(layers)):
-					fill_map = layers[l_ind][1]
-					if(item[2] < layers[l_ind][0]):
-						self.compute_S(S, item, layers[l_ind])
-						best_S_current_layer = np.amax(S)
-						if(best_S_current_layer > S_star):
-							S_star = best_S_current_layer
-							best_position = np.where(S = S_star)
-							best_layer = l_ind
-			if(S_star > 0.0):
-				fill_map = layers[best_layer][1]
-				self.add_to_fill_map(best_position, item, fill_map, j+1)
-				layers[best_layer][0] = item[2] #increase the heigth of the layer
-				layers[best_layer][1] = fill_map
-			else: #initialize a new layer if can't fit anywhere else
-				fill_map = np.zeros((current_car[0], current_car[1]), dtype=np.int32)
-				self.add_to_fill_map([0,0], item, fill_map, j+1)
-				layers.append([item[2], fill_map])
-
+			S_best = 0.0
+			S_temp = 0.0
+			best_layer = -1
+			best_pos = [-1, -1]
+			
+			for l in range(len(layers)):
+				layer = layers[l]
+				if(item[2] <= layer[0]):
+					self.compute_S(S, item, layer)
+					S_temp = np.max(S)
+					if(S_temp > S_best):
+						best_layer = l
+						S_best = S_temp
+						best_pos = np.asarray(np.where(S == S_best))[:,0]
+			if(S_best > 0.0):
+				self.add_to_fill_map(best_pos, item, layers[best_layer][1], j+1)
+			else:
+				for l in range(len(layers)):
+					layer = layers[l]
+					if(item[2] > layer[0]):
+						self.compute_S(S, item, layer)
+						S_temp = np.max(S)
+						if(S_temp > S_best):
+							best_layer = l
+							S_best = S_temp
+							best_pos = np.asarray(np.where(S == S_best))[:,0]
+				if(S_best > 0.0):
+					self.add_to_fill_map(best_pos, item, layers[best_layer][1], j+1)
+					layers[best_layer][0] = item[2]
+				else:
+					layers.append([item[2], np.zeros((current_car[0], current_car[1]), dtype=np.int32)])
+					self.add_to_fill_map([0,0], item, layers[-1][1], j+1)
+ 
 		for layer in layers:
 			print(layer[1])
 			print("")
@@ -174,6 +164,7 @@ class Garage:
 			print(car.get_size())
 
 def main():
+	
 	#Main mainly for testing
 	garage = Garage()
 
@@ -184,30 +175,21 @@ def main():
 	garage.add_car(8,8,8)
 	#garage.print_cars()
 
-	#itemlist = []
-	#for i in range(10):
-	#	r = np.random.randint(1,6,size=3)
-	#	itemlist.append([r[0],r[1],r[2]])
+	np.random.seed(13516166)
 
-	#garage.set_items(itemlist)
-	#garage.distribute_items_to_bins()
-	#garage.pack_items()
-	
-	
-	item = [2,2	,3]
-	fill_map = np.zeros((5, 5), dtype=np.int32)
-	garage.add_to_fill_map([0,0], item, fill_map, 1)
-	S = np.zeros((5, 5), dtype=np.float64)
-	#print(fill_map)
-	garage.compute_S(S, item, [3, fill_map])
-	#for x in range(5):
-	#	for y in range(5):
-	#		if(x + item[0] - 1 >= 5 or y + item[1] - 1 >= 5 or fill_map[x:x + item[0], y:y + item[1]].any()):
-	#			S[x,y] = -1.0
-	#		else:
-	#			S[x,y] = garage.compute_S(S)
-	#print(garage.perimeter_touching_items_or_walls([0,3], item, fill_map))
-	print(S)
-	
+	if(len(sys.argv) == 2):
+		n_items = int(sys.argv[1])
+	else:
+		n_items = 5
+
+	itemlist = []
+	for i in range(n_items):
+		r = np.random.randint(1,6,size=3)
+		itemlist.append([r[0],r[1],r[2]])
+
+	garage.set_items(itemlist)
+	garage.distribute_items_to_bins()
+	garage.pack_items()
+		
 if __name__ == "__main__":
 	main()
