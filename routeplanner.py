@@ -1,4 +1,5 @@
 import citygenerator
+import carpacker
 import networkx
 import numpy as np
 
@@ -151,11 +152,16 @@ def generate_targets(city, n):
 	return(targets)
 
 def main():
+	#Generating the city
 	nx = 20
 	ny = 20
 	steps = 200
 	helsinki = citygenerator.City(steps, nx, ny)
+
+	#Generating targets
 	targets = generate_targets(helsinki, 10)
+
+	#Solve shortest paths between points and then shortest route
 	shortest_paths = best_routes(helsinki, targets)
 
 	solver = Salesman_solver(shortest_paths)

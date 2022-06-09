@@ -14,56 +14,73 @@ class Car:
 		return(self.sizex, self.sizey, self.sizez)
 
 	def set_size(self, x, y, z):
-		self.x = x
-		self.y = y
-		self.z = z
+		self.sizex = x
+		self.sizey = y
+		self.sizez = z
 
 	def get_volume(self):
 		return(self.sizex*self.sizey*self.sizez)
 
-	def attempt_to_fit(items):
-		print("attemp to fit not implemented")
+class Packet:
 
+	def __init__(self, sizex=1, sizey=1, sizez=1, number=0, address=None):
+		self.size = [sizex, sizey, sizez]
+		self.address = address
+		self.number = number
 
+	def set_address(self, address):
+		self.address = address
+
+	def set_size(self, sizex, sizey, sizez):
+		self.size = [sizex, sizey, sizez]
+
+	def get_size(self):
+		return(self.size)
+	
+	def get_number(self):
+		return(self.number)
+	
+	def get_address(self):
+		return(self.address)
 
 class Garage:
 	def __init__(self):
 		self.cars = []
-		self.items = []
+		self.packets = []
 		self.bins = {}
 
 	def add_car(self, sizex=10, sizey=10, sizez=10):
 		self.cars.append(Car(sizex, sizey, sizez))
 		self.cars = sorted(self.cars, key=lambda x: x.get_volume(), reverse=True)
 
-	def set_items(self, items):
-		self.items = items
+	def set_packets(self, packets):
+		self.packets = packets
 
 	def distribute_items_to_bins(self, beta=0.75):
 		#Three dimensional bin packing problem
 		#Using Lodi et al. 2002 Heuristic algorithms for the three-dimensional bin packing problem
 		#Start by sorting the items into clusters with similar heights
 		self.bins.clear()
-		self.items = sorted(self.items, key=lambda x: x[2], reverse=True)
-		current_z = self.items[0][2]
+		self.packets = sorted(self.packets, key=lambda x: x.get_size()[2], reverse=True)
+		current_z = self.packets[0].get_size()[2]
 		self.bins[current_z] = []
 
-		for item in self.items:
+		for packet in self.packets:
 			#If item close to Z value of current bin, add to bin
 			#Else: create new bin with current size
-			if(item[2]>=beta*current_z):
-				self.bins[current_z].append(item)
+			if(packet.get_size()[2]>=beta*current_z):
+				self.bins[current_z].append(packet)
 			else:
-				current_z = item[2]
+				current_z = packet.get_size()[2]
 				self.bins[current_z] = []
-				self.bins[current_z].append(item)
+				self.bins[current_z].append(packet)
 
 		#Sort into non-increasing areae
-		self.items.clear()
+		self.packets.clear()
 		for key in self.bins.keys():
-			self.bins[key] = sorted(self.bins[key], key=lambda x: x[0]*x[1], reverse=True)
-			for item in self.bins[key]:
-				self.items.append(item)
+			self.bins[key] = sorted(self.bins[key], key=lambda x: x.get_size()[0]*x.get_size()[1], reverse=True)
+			for packet in self.bins[key]:
+				self.packets.append(packet)
 
 	def add_to_fill_map(self, p, item, fill_map, marker = 1):
 		for x in range(p[0], p[0] + item[0]):
@@ -123,20 +140,19 @@ class Garage:
 		
 		if(not input_layers):
 			fill_map = np.zeros((current_car[0], current_car[1]), dtype=np.int32)
-			layer_h = self.items[0][2]
-			layers.append([layer_h, fill_map])
-			self.add_to_fill_map([0,0], self.items[0], fill_map, 1)
+			layer_h = self.packets[0].get_size()[2]
+			layers.append([layer_h, fill_map, [self.packets[0].get_number()]])
+			self.add_to_fill_map([0,0], self.packets[0].get_size(), fill_map, self.packets[0].get_number()+1)
 			start_index = 1
 		else:
 			start_index = 0
 			for layer in input_layers:
-				layers.append( [layer[0], layer[1]*0] )
-				
+				layers.append( [layer[0], layer[1]*0, []] )
 
 		S_best = 0.0
 		S_temp = 0.0	
-		for j in range(start_index, len(self.items)):
-			item = self.items[j]
+		for j in range(start_index, len(self.packets)):
+			item = self.packets[j].get_size()
 			S_best = 0.0
 			S_temp = 0.0
 			best_layer = -1
@@ -152,7 +168,8 @@ class Garage:
 						S_best = S_temp
 						best_pos = np.asarray(np.where(S == S_best))[:,0]
 			if(S_best > 0.0):
-				self.add_to_fill_map(best_pos, item, layers[best_layer][1], j+1)
+				self.add_to_fill_map(best_pos, item, layers[best_layer][1], self.packets[j].get_number()+1)
+				layers[best_layer][2].append(self.packets[j].get_number())
 			else:
 				for l in range(len(layers)):
 					layer = layers[l]
@@ -164,11 +181,12 @@ class Garage:
 							S_best = S_temp
 							best_pos = np.asarray(np.where(S == S_best))[:,0]
 				if(S_best > 0.0):
-					self.add_to_fill_map(best_pos, item, layers[best_layer][1], j+1)
+					self.add_to_fill_map(best_pos, item, layers[best_layer][1], self.packets[j].get_number()+1)
 					layers[best_layer][0] = item[2]
+					layers[best_layer][2].append(self.packets[j].get_number())
 				else:
-					layers.append([item[2], np.zeros((current_car[0], current_car[1]), dtype=np.int32)])
-					self.add_to_fill_map([0,0], item, layers[-1][1], j+1)
+					layers.append([item[2], np.zeros((current_car[0], current_car[1]), dtype=np.int32), [self.packets[j].get_number()]])
+					self.add_to_fill_map([0,0], item, layers[-1][1], self.packets[j].get_number()+1)
  
 		#for layer in layers:
 		#	print(layer[1])
@@ -181,11 +199,12 @@ class Garage:
 		#Swap two coordinates, used to generate more packing attempts
 		temp = [0,0,0]
 		temp_scalar = 0
-		for item in self.items:
-			temp[c2] = item[c1]
-			temp[c1] = item[c2]
-			item[c1] = temp[c1]
-			item[c2] = temp[c2]
+		for packet in self.packets:
+			temp = packet.get_size()
+			temp_scalar = temp[c1]
+			temp[c1] = temp[c2]
+			temp[c2] = temp_scalar
+			packet.set_size(temp[0], temp[1], temp[2])
 		
 		for car in self.cars:
 			temp = list(car.get_size())
@@ -224,7 +243,8 @@ class Garage:
 			if(cars_needed < min_cars_needed):
 				best_bin = i
 				min_cars_needed = cars_needed
-
+		
+		print("Best solution index:", best_bin)
 		print("Cars needed:", min_cars_needed)		
 		print("Best packing:", bins_1d[best_bin])
 
@@ -240,7 +260,7 @@ def main():
 	garage.add_car(8,8,8)
 	#garage.print_cars()
 
-	np.random.seed(13516166)
+	#np.random.seed(13516166)
 
 	if(len(sys.argv) == 2):
 		n_items = int(sys.argv[1])
@@ -250,9 +270,9 @@ def main():
 	itemlist = []
 	for i in range(n_items):
 		r = np.random.randint(1,6,size=3)
-		itemlist.append([r[0],r[1],r[2]])
+		itemlist.append(Packet(r[0],r[1],r[2],i))
 
-	garage.set_items(itemlist)
+	garage.set_packets(itemlist)
 	#garage.distribute_items_to_bins()
 	garage.pack_items()
 		
