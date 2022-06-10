@@ -3,12 +3,11 @@ import sys
 import binpacking
 
 class Car:
-	addresses = []
-
 	def __init__(self, sizex=10, sizey=10, sizez=10):
 		self.sizex = sizex
 		self.sizey = sizey
 		self.sizez = sizez
+		self.addresses = []
 
 	def get_size(self):
 		return(self.sizex, self.sizey, self.sizez)
@@ -20,6 +19,9 @@ class Car:
 
 	def get_volume(self):
 		return(self.sizex*self.sizey*self.sizez)
+
+	def set_addresses(self, address_list):
+		self.addresses = address_list
 
 class Packet:
 
@@ -48,6 +50,7 @@ class Garage:
 		self.cars = []
 		self.packets = []
 		self.bins = {}
+		self.final_packing = None
 
 	def add_car(self, sizex=10, sizey=10, sizez=10):
 		self.cars.append(Car(sizex, sizey, sizez))
@@ -55,6 +58,9 @@ class Garage:
 
 	def set_packets(self, packets):
 		self.packets = packets
+
+	def get_final_packing(self):
+		return(self.final_packing)
 
 	def distribute_items_to_bins(self, beta=0.75):
 		#Three dimensional bin packing problem
@@ -141,7 +147,7 @@ class Garage:
 		if(not input_layers):
 			fill_map = np.zeros((current_car[0], current_car[1]), dtype=np.int32)
 			layer_h = self.packets[0].get_size()[2]
-			layers.append([layer_h, fill_map, [self.packets[0].get_number()]])
+			layers.append([layer_h, fill_map, [self.packets[0]]])
 			self.add_to_fill_map([0,0], self.packets[0].get_size(), fill_map, self.packets[0].get_number()+1)
 			start_index = 1
 		else:
@@ -169,7 +175,7 @@ class Garage:
 						best_pos = np.asarray(np.where(S == S_best))[:,0]
 			if(S_best > 0.0):
 				self.add_to_fill_map(best_pos, item, layers[best_layer][1], self.packets[j].get_number()+1)
-				layers[best_layer][2].append(self.packets[j].get_number())
+				layers[best_layer][2].append(self.packets[j])
 			else:
 				for l in range(len(layers)):
 					layer = layers[l]
@@ -183,9 +189,9 @@ class Garage:
 				if(S_best > 0.0):
 					self.add_to_fill_map(best_pos, item, layers[best_layer][1], self.packets[j].get_number()+1)
 					layers[best_layer][0] = item[2]
-					layers[best_layer][2].append(self.packets[j].get_number())
+					layers[best_layer][2].append(self.packets[j])
 				else:
-					layers.append([item[2], np.zeros((current_car[0], current_car[1]), dtype=np.int32), [self.packets[j].get_number()]])
+					layers.append([item[2], np.zeros((current_car[0], current_car[1]), dtype=np.int32), [self.packets[j]]])
 					self.add_to_fill_map([0,0], item, layers[-1][1], self.packets[j].get_number()+1)
  
 		#for layer in layers:
@@ -247,7 +253,6 @@ class Garage:
 		
 		print("Best solution index:", best_bin)
 		print("Cars needed:", min_cars_needed)		
-		print("Best packing:", bins_1d[best_bin])
 		
 		final_packing = []
 		used_indexes = []
@@ -256,22 +261,14 @@ class Garage:
 		for b in bins_1d[best_bin]:
 			final_packing.append([])
 			i += 1
-			print(b, i)
 			for layer_size in b:
-				print(layer_size)
 				for ind in range(len(bins[best_bin])):
 					if( ind not in used_indexes and bins[best_bin][ind][0] == layer_size):
 						used_indexes.append(ind)
 						final_packing[i].append(bins[best_bin][ind])
 						break
-					
-		print("Final packing: ")
-
-		for car in final_packing:
-			print("car")
-			for array in car:
-				print(array[1])
-				print("---")
+						
+		self.final_packing = final_packing
 
 def main():
 	
@@ -298,7 +295,6 @@ def main():
 		itemlist.append(Packet(r[0],r[1],r[2],i))
 
 	garage.set_packets(itemlist)
-	#garage.distribute_items_to_bins()
 	garage.pack_items()
 		
 if __name__ == "__main__":

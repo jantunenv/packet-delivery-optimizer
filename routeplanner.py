@@ -11,7 +11,6 @@ class Salesman_solver:
 		#Paths: dictionary with keys: nodes and values: [path_length, [path]]
 		self.paths = paths
 		self.visit_list = np.zeros(len(paths.keys()),dtype=np.int8)
-
 	def solve(self, method="naive", steps = 1000, beta=0.5, initmode="random"):
 		if(method=="naive"):
 			return(self.solve_naive())
@@ -144,11 +143,13 @@ def best_routes(city, targets):
 def generate_targets(city, n):
 	targets = []
 
-	prob = n/len(list(city.streets.nodes))
-	for node in list(city.streets.nodes):
-		rn = np.random.rand()
-		if(rn<=prob):
-			targets.append(node)
+	#prob = n/len(list(city.streets.nodes))
+
+	r = np.random.randint(0, len(list(city.streets.nodes)), size = n)
+
+	for target in r:
+		targets.append(list(city.streets.nodes)[target])
+
 	return(targets)
 
 def main():
