@@ -66,9 +66,11 @@ class Salesman_solver:
 			if(e_new <= e_old):
 				route[ind1], route[ind2] = route[ind2], route[ind1]
 			else:
-
+				Tmax = 1/beta
+				T = Tmax/(1+np.log10(1+step))
+				
 				rn = np.random.rand()
-				p = np.exp(-beta*(e_new - e_old))
+				p = np.exp(-(e_new - e_old)/T)
 				if(rn<p):
 					route[ind1], route[ind2] = route[ind2], route[ind1]
 
@@ -108,8 +110,6 @@ class Salesman_solver:
 			current = shortest[0]
 			self.visit_list[current] = 1
 			route.append(shortest)
-
-
 
 		#remove dublicates from the final route and compress in together
 		finalroute = []

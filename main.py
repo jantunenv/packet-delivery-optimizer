@@ -4,12 +4,10 @@ import carpacker
 import routeplanner
 import citygenerator
 
-
-
 def main():
 	nx = 20
 	ny = 20
-	steps = 400
+	steps = 600
 	london = citygenerator.City(steps, nx, ny)
 
 	n_packages = 50
@@ -44,14 +42,23 @@ def main():
 
 	routes = []
 	solver = routeplanner.Salesman_solver(shortest_paths[0])
+
+	if(len(sys.argv)>2):
+		steps = int(sys.argv[1])
+		betamax = float(sys.argv[2])
+	else:
+		steps = 10000
+		betamax = 0.001
+
 	for i in range(len(shortest_paths)):
 		solver.paths = shortest_paths[i]
-		routes.append(solver.solve("metropolis")) 
+		routes.append(solver.solve("metropolis", steps, betamax)) 
 
+	frate = 5
 	for i in range(len(routes)):
-		citygenerator.draw_city(london, nx, ny, car_destinations[i], routes[i])
-
-
+		#citygenerator.draw_city(london, nx, ny, car_destinations[i], routes[i])
+		length = 1.0*len(routes[i])/frate
+		citygenerator.animate_route(london, nx, ny, car_destinations[i], routes[i], name = "test"+str(i)+".mp4", seconds=length, frate=frate)
 
 if __name__ == "__main__":
 	main()

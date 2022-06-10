@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation
 import networkx
 
 class City:
@@ -34,6 +35,24 @@ class City:
 
 		self.streets = nodes_and_edges
 
+def animate_route(city, nx, ny, targets, route, name = "test.mp4", seconds = 10, frate = 10):
+	ffmpeg_writer = matplotlib.animation.writers['ffmpeg']
+	anim_writer = ffmpeg_writer(fps=frate)
+	fig = plt.figure()
+	positions = {}
+	car_marker, = plt.plot([],[], 'ro', markersize = 10)
+	for node in list(city.streets.nodes):
+		positions[node] = [node%nx, int(node/ny)]
+
+	networkx.drawing.nx_pylab.draw_networkx_edges(city.streets, pos=positions)
+	plt.plot([positions[node][0] for node in targets], [positions[node][1] for node in targets],"*")
+	plt.plot([positions[node][0] for node in route], [positions[node][1] for node in route],'r')
+
+	with anim_writer.saving(fig, name, seconds):
+		for node in route:
+			car_marker.set_data(positions[node][0], positions[node][1])
+			anim_writer.grab_frame()
+
 def draw_city(city, nx=10, ny=10, targets=[], route=[]):
 	positions = {}
 	for node in list(city.streets.nodes):
@@ -46,7 +65,8 @@ def draw_city(city, nx=10, ny=10, targets=[], route=[]):
 	if(route):
 		plt.plot([positions[node][0] for node in route], [positions[node][1] for node in route],'r')
 	plt.show()
-
+	
+	
 
 def main():
 	if(len(sys.argv)==4):
