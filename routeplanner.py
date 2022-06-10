@@ -160,13 +160,17 @@ def main():
 	helsinki = citygenerator.City(steps, nx, ny)
 
 	#Generating targets
-	targets = generate_targets(helsinki, 10)
+	targets = generate_targets(helsinki, 5)
 
 	#Solve shortest paths between points and then shortest route
 	shortest_paths = best_routes(helsinki, targets)
 
+	for key in shortest_paths.keys():
+		print(shortest_paths[key])
+
 	solver = Salesman_solver(shortest_paths)
-	solution = solver.solve("metropolis")
+	solution = solver.solve("naive")
+
 
 	citygenerator.draw_city(helsinki, nx, ny, targets, solution)
 

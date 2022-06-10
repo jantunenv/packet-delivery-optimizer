@@ -7,7 +7,7 @@ import citygenerator
 def main():
 	nx = 20
 	ny = 20
-	steps = 600
+	steps = 200
 	london = citygenerator.City(steps, nx, ny)
 
 	n_packages = 50
@@ -41,7 +41,6 @@ def main():
 		shortest_paths.append(routeplanner.best_routes(london, dests))
 
 	routes = []
-	solver = routeplanner.Salesman_solver(shortest_paths[0])
 
 	if(len(sys.argv)>2):
 		steps = int(sys.argv[1])
@@ -51,14 +50,13 @@ def main():
 		betamax = 0.001
 
 	for i in range(len(shortest_paths)):
-		solver.paths = shortest_paths[i]
-		routes.append(solver.solve("metropolis", steps, betamax)) 
+		solver = routeplanner.Salesman_solver(shortest_paths[i])
+		routes.append(solver.solve("naive")) 
 
 	frate = 5
 	for i in range(len(routes)):
 		#citygenerator.draw_city(london, nx, ny, car_destinations[i], routes[i])
-		length = 1.0*len(routes[i])/frate
-		citygenerator.animate_route(london, nx, ny, car_destinations[i], routes[i], name = "test"+str(i)+".mp4", seconds=length, frate=frate)
+		citygenerator.animate_route(london, nx, ny, car_destinations[i], routes[i], name = "test"+str(i)+".mp4", resolution=100, frate=frate)
 
 if __name__ == "__main__":
 	main()

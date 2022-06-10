@@ -35,7 +35,7 @@ class City:
 
 		self.streets = nodes_and_edges
 
-def animate_route(city, nx, ny, targets, route, name = "test.mp4", seconds = 10, frate = 10):
+def animate_route(city, nx, ny, targets, route, name = "test.mp4", resolution = 100, frate = 10):
 	ffmpeg_writer = matplotlib.animation.writers['ffmpeg']
 	anim_writer = ffmpeg_writer(fps=frate)
 	fig = plt.figure()
@@ -48,7 +48,7 @@ def animate_route(city, nx, ny, targets, route, name = "test.mp4", seconds = 10,
 	plt.plot([positions[node][0] for node in targets], [positions[node][1] for node in targets],"*")
 	plt.plot([positions[node][0] for node in route], [positions[node][1] for node in route],'r')
 
-	with anim_writer.saving(fig, name, seconds):
+	with anim_writer.saving(fig, name, resolution):
 		for node in route:
 			car_marker.set_data(positions[node][0], positions[node][1])
 			anim_writer.grab_frame()
@@ -65,8 +65,6 @@ def draw_city(city, nx=10, ny=10, targets=[], route=[]):
 	if(route):
 		plt.plot([positions[node][0] for node in route], [positions[node][1] for node in route],'r')
 	plt.show()
-	
-	
 
 def main():
 	if(len(sys.argv)==4):
