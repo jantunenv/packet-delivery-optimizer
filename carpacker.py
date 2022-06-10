@@ -236,6 +236,7 @@ class Garage:
 			bins_1d.append(binpacking.to_constant_volume([a[0] for a in p2 if np.sum(a[1]) > 0], self.cars[0].get_size()[2])) 
 
 		
+		#solve one dimensional bin packing problem and find solution with the least amounts of cars needed
 		bestbin = -1
 		min_cars_needed = 9999999
 		for i in range(len(bins_1d)):
@@ -247,6 +248,30 @@ class Garage:
 		print("Best solution index:", best_bin)
 		print("Cars needed:", min_cars_needed)		
 		print("Best packing:", bins_1d[best_bin])
+		
+		final_packing = []
+		used_indexes = []
+		#Finally create the packing for each car
+		i = -1
+		for b in bins_1d[best_bin]:
+			final_packing.append([])
+			i += 1
+			print(b, i)
+			for layer_size in b:
+				print(layer_size)
+				for ind in range(len(bins[best_bin])):
+					if( ind not in used_indexes and bins[best_bin][ind][0] == layer_size):
+						used_indexes.append(ind)
+						final_packing[i].append(bins[best_bin][ind])
+						break
+					
+		print("Final packing: ")
+
+		for car in final_packing:
+			print("car")
+			for array in car:
+				print(array[1])
+				print("---")
 
 def main():
 	
