@@ -29,6 +29,10 @@ class Packet:
 		self.size = [sizex, sizey, sizez]
 		self.address = address
 		self.number = number
+		self.position = [0,0]
+
+	def set_position(self, position):
+		self.position = position
 
 	def set_address(self, address):
 		self.address = address
@@ -149,6 +153,7 @@ class Garage:
 			layer_h = self.packets[0].get_size()[2]
 			layers.append([layer_h, fill_map, [self.packets[0]]])
 			self.add_to_fill_map([0,0], self.packets[0].get_size(), fill_map, self.packets[0].get_number()+1)
+			self.packets[0].set_position([0,0])
 			start_index = 1
 		else:
 			start_index = 0
@@ -176,6 +181,7 @@ class Garage:
 			if(S_best > 0.0):
 				self.add_to_fill_map(best_pos, item, layers[best_layer][1], self.packets[j].get_number()+1)
 				layers[best_layer][2].append(self.packets[j])
+				self.packets[j].set_position(best_pos)
 			else:
 				for l in range(len(layers)):
 					layer = layers[l]
@@ -190,9 +196,12 @@ class Garage:
 					self.add_to_fill_map(best_pos, item, layers[best_layer][1], self.packets[j].get_number()+1)
 					layers[best_layer][0] = item[2]
 					layers[best_layer][2].append(self.packets[j])
+					self.packets[j].set_position(best_pos)
 				else:
 					layers.append([item[2], np.zeros((current_car[0], current_car[1]), dtype=np.int32), [self.packets[j]]])
 					self.add_to_fill_map([0,0], item, layers[-1][1], self.packets[j].get_number()+1)
+					self.packets[j].set_position([0,0])
+
  
 		#for layer in layers:
 		#	print(layer[1])

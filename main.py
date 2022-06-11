@@ -4,6 +4,17 @@ import carpacker
 import routeplanner
 import citygenerator
 
+def packing_position(item_number, fill_map):
+	x = -1
+	y = -1
+	fill_marker = item_number + 1
+	positions = np.where(fill_map == fill_marker)
+	
+	x = min(positions[0])
+	y = min(positions[1])
+
+	return([x, y])
+
 def main():
 	nx = 20
 	ny = 20
@@ -25,6 +36,15 @@ def main():
 	garage.pack_items()
 
 	packing = garage.get_final_packing()
+
+	for car in packing:
+		print("car")
+		for layer in car:
+			print("layer", layer[0])
+			for item in layer[2]:
+				print(packing_position(item.get_number(), layer[1]),item.get_size())
+
+	exit()
 
 	car_destinations = []
 	for car in packing:
